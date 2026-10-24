@@ -1,30 +1,37 @@
 import streamlit as st
-#print welcome to gen ai and agent ai course in bold and center
-st.markdown("<h1 style='text-align: center; color: blue;'>Welcome to GEN AI and AGENT AI Couse</h1>", unsafe_allow_html=True)
-st.write("Please enter your details to register for the course")    
+import os
+from dotenv import load_dotenv
+from openai import OpenAI
+load_dotenv()
+api_key=os.getenv("OPENAI")
 
-#give me a button that ask user enter you name and when enterned print he name      use text_input and button
+client = OpenAI(api_key=api_key)
+st.title("Human Resource chatbot")
 
-name = st.text_input("Enter your name")
-if st.button("Enter", key="enter_name"):
-    st.write(f"Hello {name}")
+if "messages" not in  st.session_state:
+    st.session_state.messages=[]
 
-#give me select box that ask user to select their gender and when selected print the gender
-gender = st.selectbox("Select your gender", ["Male", "Female", "Other"])
-if st.button("Enter", key="enter_gender"):
-    st.write(f" {gender}")
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.write(message["content"])
 
-#give me radio buttion that ask your qualification like btech, mtech, phd and when selected print the qualification
-qualification = st.radio("Select your qualification", ["Btech", "Mtech", "Phd"])
-if st.button("Enter", key="enter_qualification"):
-    st.write(f"{qualification}")
-
-#give a submit button . when user clicking then it will display we have registed to gen ai and agent ai course  . give a button that ask user to enter their email and when entered print the email
-if st.button("Submit", key="submit_registration"):
-    st.write("you have registed to gen ai and agent ai course")
-
-
-
-
-
-
+input_text=st.chat_input("Ask me anything about human resources")
+if input_text:
+    st.session_state.messages.append({
+        "role": "user",
+        "content": input_text
+    })
+    with st.chat_message("user"):
+        st.write(input_text)
+   
+    response= client.responses.create(
+        model="gpt-4.1",
+        instructions = "You are a helpful and friendly HR chatbot. Answer only questions related to Human Resources. If the user asks an unrelated question, politely explain that you can help only with HR-related topics and encourage them to ask an HR question.",
+        input = st.session_state.messages,
+        temperature = 0.5
+    )
+    st.session_state.messages.append({"role": "assistant",
+    "content": response.output_text})
+    with st.chat_message("assistant"):
+        st.write(response.output_text)   
+        
